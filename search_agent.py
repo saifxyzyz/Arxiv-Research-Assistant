@@ -5,11 +5,10 @@ import arxiv
 import os
 import requests
 from pypdf import PdfReader
-import chromadb
-from google import genai
+from google.adk.agents import SequentialAgent
+from fpdf import FPDF
 
-DB_PATH = "vector_store"
-EMBEDDING_MODEL = "text-embedding-004"
+
 DOWNLOAD_DIR = "papers"
 def download_to_pdf(url: str, filename: str) -> str:
     print(f"\n[tool] Attempting to download: {filename} at {url}")
@@ -64,52 +63,76 @@ def search_arxiv_tool(query: str) -> str:
     except Exception as e:
         return f"Arxiv search failed: {str(e)}"
 
-def ingest_to_db() -> str:
-    print(f"\n[Librarian] Starting the embedding process")
+def get_all_papers_content() -> str:
+    if not os.path.exists(DOWNLOAD_DIR):
+        return "No papers found."
+    combined_text = "Here is the content of the research papers I found:\n\n"
     files = [f for f in os.listdir(DOWNLOAD_DIR) if f.endswith(".pdf")]
     if not files:
-        return f"There are no files to ingest"
-    count = 0
-    for f in files:
-        path = os.path.join(DOWNLOAD_DIR, f)
-        print(f"[Librarian] Processing file {f}")
-        reader = PdfReader(path)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text()
-        chunks = [text[i:i+1000] for i in range(0, len(text), 1000)]
-        ids = [f"{f}_chunk_{i}" for i in range(len(chunks))]
-        # Call Google API to get embeddings for these chunks
-        # Note: In production, batch this!
-        print(f"   - Embedding {len(chunks)} chunks...")
-        embeddings = []
-        for chunk in chunks:
-            resp = client.models.embed_content(
-                model=EMBEDDING_MODEL,
-                contents=chunk
-            )
-            embeddings.append(resp.embeddings[0].values)
+        return "No PDF files found in the directory."
 
-        # Add to Chroma
-        collection.add(
-            documents=chunks,
-            embeddings=embeddings,
-            ids=ids,
-            metadatas=[{"source": f}] * len(chunks)
-        )
-        count += 1
+    print(f"[System] Reading {len(files)} PDF files from disk...")
 
-    return f"Successfully ingested {count} documents into the Vector Database."
+    for filename in files:
+        filepath = os.path.join(DOWNLOAD_DIR, filename)
+        try:
+            reader = PdfReader(filepath)
+            paper_text = ""
+            # Read all pages
+            for page in reader.pages:
+                paper_text += page.extract_text()
+            # Add to the giant string with clear separators
+            combined_text += f"=== START OF PAPER: {filename} ===\n"
+            combined_text += paper_text[:5000] # Limit to 50k chars per paper to be safe, or remove limit for full text
+            combined_text += f"\n=== END OF PAPER: {filename} ===\n\n"
+            print(f"   -> Loaded: {filename}")
+        except Exception as e:
+            print(f"   -> Failed to read {filename}: {e}")
+
+    combined_text += "\nINSTRUCTIONS: Write a detailed report. Create a dedicated section for EACH paper listed above."
+    return combined_text
+
+def write_to_pdf(filename,text):
+    print(f"[Report Writer] writing report to: {filename}")
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        safe_content = text.encode('latin-1', 'replace').decode('latin-1')
+        pdf.multi_cell(0, 10, safe_content)
+        if not filename.endswith(".pdf"):
+            filename += ".pdf"
+        pdf.output(filename)
+        return f"Successfully saved report to {filename}"
+
+    except Exception as e:
+        return f"Error creating PDF: {str(e)}"
+
 
 search_agent = Agent(
     name="search_assistant",
     model = "gemini-2.0-flash",
     instruction="""You are a research assistant.
-    1. search for at least 10 latest research papers.
+    1. search for the latest research papers.
     2. Find the direct pdf files to the research papers and download them using 'download_to_pdf'.
-    3. give the file name the same as the first 5 characters title of the paper""",
+    3. give the file name the same as the first 5 characters title of the paper, replace any " " with "_" """,
     description='An assistant that can search the web',
     tools=[search_arxiv_tool, download_to_pdf]
+)
+
+report_agent = Agent(
+    name="search_assistant",
+    model = "gemini-2.0-flash",
+    instruction="""You are a senior technical writer. You read research papers and summarize them into structured reports.
+    1. To access the contents of the research papers use the 'get_all_papers_content' tool
+    2. I want you to create a detailed report about all the research papers with different sections for each research paper""",
+    tools=[get_all_papers_content]
+)
+
+root_agent = SequentialAgent(
+    name="root_agent",
+    sub_agents = [search_agent, report_agent],
+    description= "Manages the execution of sub agents"
 )
 
 async def main_async():
@@ -117,7 +140,7 @@ async def main_async():
     user_id = "user_1"
     app_name = "search_appv1"
     usr_input = input(str("What domain are you looking to perform a research in? "))
-    runner = InMemoryRunner(agent=search_agent, app_name = app_name)
+    runner = InMemoryRunner(agent=root_agent, app_name = app_name)
     user_msg = Content(parts=[Part(text= usr_input)])
     print("--- Search Agent running ---")
     await runner.session_service.create_session(
@@ -126,18 +149,24 @@ async def main_async():
         app_name = app_name
     )
     print("session created successfuly")
-
+    full_report_text = ""
     async for event in runner.run_async(
         session_id = session_id,
         user_id = user_id,
         new_message = user_msg,
     ):
-        try:
-            print("Agent response:")
-            print(event)
-        except Exception:
-            pass
-
+        if hasattr(event, 'content') and event.content:
+            if hasattr(event.content, 'parts'):
+                for part in event.content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        # Print to console (streaming)
+                        print(part.text, end="", flush=True)
+                        # Capture for PDF
+                        full_report_text += part.text
+        if full_report_text:
+            write_to_pdf("Final_Research_Report.pdf", full_report_text)
+        else:
+            print("[System] No text generated, skipping PDF creation.")
 
 if __name__ == "__main__":
     import asyncio
