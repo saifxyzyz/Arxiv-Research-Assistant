@@ -2,3 +2,4 @@ papers/
 .env
 *.pdf
 .gitignore
+.*excalidraw

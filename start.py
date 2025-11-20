@@ -83,7 +83,7 @@ def get_all_papers_content() -> str:
                 paper_text += page.extract_text()
             # Add to the giant string with clear separators
             combined_text += f"=== START OF PAPER: {filename} ===\n"
-            combined_text += paper_text[:5000] # Limit to 50k chars per paper to be safe, or remove limit for full text
+            combined_text += paper_text[:10000] # Limit to 50k chars per paper to be safe, or remove limit for full text
             combined_text += f"\n=== END OF PAPER: {filename} ===\n\n"
             print(f"   -> Loaded: {filename}")
         except Exception as e:
