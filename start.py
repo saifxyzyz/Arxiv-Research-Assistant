@@ -142,7 +142,7 @@ async def main_async():
     usr_input = input(str("What domain are you looking to perform a research in? "))
     runner = InMemoryRunner(agent=root_agent, app_name = app_name)
     user_msg = Content(parts=[Part(text= usr_input)])
-    print("--- Search Agent running ---")
+    print("--- Root Agent running ---")
     await runner.session_service.create_session(
         session_id= session_id,
         user_id = user_id,
