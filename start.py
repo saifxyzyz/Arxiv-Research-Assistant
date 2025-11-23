@@ -165,7 +165,6 @@ async def main_async():
             if hasattr(event.content, 'parts'):
                 for part in event.content.parts:
                     if hasattr(part, 'text') and part.text:
-                        print(part.text, end="", flush=True)
                         full_report_text += part.text
         if full_report_text:
             write_to_pdf(full_report_text)
