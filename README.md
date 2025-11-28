@@ -13,6 +13,7 @@ Project Chimera is a sophisticated, AI-powered research automation platform desi
 - **Dynamic Data Ingestion Pipeline:** The system intelligently queries the arXiv API to fetch the most relevant and recent research papers based on user-defined domains. It includes a resilient download mechanism to handle various paper formats and ensure data integrity.
 - **LLM-Powered Analysis & Synthesis:** Chimera harnesses the power of Google's Gemini 2.0 Flash model to perform deep analysis of the ingested research papers. The `report_agent` reads the full text of multiple papers and generates a comprehensive, structured report, complete with dedicated sections for each paper.
 - **On-the-Fly PDF Report Generation:** The final output is a professionally formatted PDF document, synthesized in real-time. This allows for easy sharing, archiving, and offline access to the synthesized research.
+- **Web Interface:** A simple and intuitive web interface allows users to easily submit their research queries and download the generated reports.
 - **Scalable and Modular Architecture:** Built on the Google ADK, the entire system is designed to be scalable and modular. New agents, data sources, or processing capabilities can be seamlessly integrated to expand the platform's functionality.
 
 ## Architectural Overview
@@ -27,10 +28,12 @@ This decoupled, agent-based architecture ensures that each part of the process i
 ## Technology Stack
 
 - **Core Framework:** Google Agent Development Kit (ADK)
+- **Web Framework:** Flask
 - **Language Model:** Google Gemini 2.0 Flash
 - **Programming Language:** Python
 - **Key Libraries:**
     - `google-adk`
+    - `Flask`
     - `arxiv`
     - `pypdf`
     - `fpdf`
@@ -62,16 +65,24 @@ This decoupled, agent-based architecture ensures that each part of the process i
     ```
 
 5.  **Run the application:**
+    
+    **Command-line version:**
     ```bash
-    python start.py
+    python start_cli.py
     ```
     You will be prompted to enter a research domain. The final report will be saved in the `papers/<your-domain>/` directory.
+
+    **Web Interface:**
+    ```bash
+    python app.py
+    ```
+    Open your web browser and go to `http://127.0.0.1:5000` to use the web interface.
 
 ## Future Work
 
 Project Chimera is a foundational platform with immense potential for growth. Future enhancements could include:
 
 - [ ] **Integration with more data sources:** Expanding beyond arXiv to include sources like PubMed, IEEE Xplore, and others.  
-- [ ] **Interactive Web Interface:** Building a front-end to provide a more user-friendly experience for interacting with the platform.  
+- [x] **Interactive Web Interface:** Building a front-end to provide a more user-friendly experience for interacting with the platform.  
 - [ ] **Knowledge Graph Integration:** Creating a knowledge graph from the synthesized research to uncover hidden connections and insights.  
 - [ ] **Advanced Querying:** Allowing for more complex, natural language queries to drive the research process.  

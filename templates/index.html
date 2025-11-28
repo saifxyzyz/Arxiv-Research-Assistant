@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Chimera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Project Chimera</h1>
+    <p>Your AI-powered research assistant.</p>
+    <form id="research-form">
+        <input type="text" name="query" placeholder="Enter your research topic" required>
+        <button type="submit">Start Research</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('research-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = event.target.elements.query.value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Researching...</p>';
+
+            fetch('/research', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `query=${encodeURIComponent(query)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.pdf_path) {
+                    let html = '<h2>Research Papers Found:</h2><ul>';
+                    data.paper_titles.forEach(title => {
+                        html += `<li>${title}</li>`;
+                    });
+                    html += '</ul>';
+                    html += `<a href="${data.pdf_path}" target="_blank">Download Report</a><p> (or) just check the 'papers' folder in the cloned repo</p>`;
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<p>${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `<p>An error occurred: ${error}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
