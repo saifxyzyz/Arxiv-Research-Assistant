@@ -120,7 +120,8 @@ search_agent = Agent(
     instruction="""You are a research assistant.
     1. search for the most relevant research papers on the users desired topic.
     2. Find the direct pdf files to the research papers and download them using 'download_to_pdf'.
-    3. give the file name the same as the first 5 characters title of the paper, replace any " " with "_" """,
+    3. give the file name the same as the first 5 characters title of the paper, replace any " " with "_"
+    4. In case of errors, print exactly what error was returned by which tool, and try to diagnose it""",
     description='An assistant that can search the web',
     tools=[search_arxiv_tool, download_to_pdf]
 )
@@ -166,6 +167,7 @@ async def main_async():
                 for part in event.content.parts:
                     if hasattr(part, 'text') and part.text:
                         full_report_text += part.text
+                        # print(full_report_text)
         if full_report_text:
             write_to_pdf(full_report_text)
         else:
