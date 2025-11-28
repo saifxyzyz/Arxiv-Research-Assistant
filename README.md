@@ -71,7 +71,7 @@ This decoupled, agent-based architecture ensures that each part of the process i
 
 Project Chimera is a foundational platform with immense potential for growth. Future enhancements could include:
 
-- **Integration with more data sources:** Expanding beyond arXiv to include sources like PubMed, IEEE Xplore, and others.
-- **Interactive Web Interface:** Building a front-end to provide a more user-friendly experience for interacting with the platform.
-- **Knowledge Graph Integration:** Creating a knowledge graph from the synthesized research to uncover hidden connections and insights.
-- **Advanced Querying:** Allowing for more complex, natural language queries to drive the research process.
+- [ ] **Integration with more data sources:** Expanding beyond arXiv to include sources like PubMed, IEEE Xplore, and others.  
+- [ ] **Interactive Web Interface:** Building a front-end to provide a more user-friendly experience for interacting with the platform.  
+- [ ] **Knowledge Graph Integration:** Creating a knowledge graph from the synthesized research to uncover hidden connections and insights.  
+- [ ] **Advanced Querying:** Allowing for more complex, natural language queries to drive the research process.  
