@@ -2,4 +2,5 @@ papers/
 .env
 *.pdf
 .gitignore
+__pycache__/
 *.excalidraw
